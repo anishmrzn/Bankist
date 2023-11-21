@@ -69,7 +69,7 @@ const displayMovements = function (movements) {
     <div class="movements__row">
     <div class="movements__type movements__type--${type}">${i + 1} ${type}</div>
     <div class="movements__date">3 days ago</div>
-    <div class="movements__value">${mov}</div>
+    <div class="movements__value">${mov}€</div>
   </div>
   `;
 
@@ -80,11 +80,32 @@ const displayMovements = function (movements) {
     return mov > 0;
   });
   const withdrawals = movements.filter(mov => mov < 0);
-  const balance = movements.reduce((acc, mov) => acc + mov, 0);
-  labelBalance.textContent = `${balance} EUR`;
 };
 
-displayMovements(account3.movements);
+const calcDisplayBalance = function (acc) {
+  acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
+
+  labelBalance.textContent = `${acc.balance} €`;
+};
+
+const calcDisplaySummary = function (acc) {
+  const incomes = acc.movements
+    .filter(mov => mov > 0)
+    .reduce((acc, mov) => acc + mov, 0);
+  labelSumIn.textContent = `${incomes}€`;
+
+  const out = acc.movements
+    .filter(mov => mov < 0)
+    .reduce((acc, mov) => acc + mov, 0);
+  labelSumOut.textContent = `${Math.abs(out)}€`;
+
+  const interest = acc.movements
+    .filter(mov => mov > 0)
+    .map(deposit => (deposit * acc.interestRate) / 100)
+    .filter((int, i, arr) => int >= 1)
+    .reduce((acc, int) => acc + int, 0);
+  labelSumInterest.textContent = `${interest}€`;
+};
 
 const createUsernames = function (accounts) {
   accounts.forEach(function (acc) {
@@ -96,6 +117,57 @@ const createUsernames = function (accounts) {
   });
 };
 createUsernames(accounts);
+const updateUI = function (acc) {
+  displayMovements(acc.movements);
+  calcDisplayBalance(acc);
+  calcDisplaySummary(acc);
+};
+
+//login
+let currentAccount;
+
+btnLogin.addEventListener('click', function (e) {
+  e.preventDefault();
+  currentAccount = accounts.find(
+    acc => acc.username === inputLoginUsername.value
+  );
+
+  if (currentAccount?.pin === Number(inputLoginPin.value)) {
+    labelWelcome.textContent = `Welcome back, ${
+      currentAccount.owner.split(' ')[0]
+    }`;
+    containerApp.style.opacity = 100;
+
+    inputLoginUsername.value = inputLoginPin.value = '';
+    inputLoginPin.blur();
+    updateUI(currentAccount);
+  } else {
+    labelWelcome.textContent = `Wrong Username or Password`;
+    containerApp.style.opacity = 0;
+    inputLoginUsername.value = inputLoginPin.value = '';
+    inputLoginPin.blur();
+  }
+});
+
+btnTransfer.addEventListener('click', function (e) {
+  e.preventDefault();
+  const amount = Number(inputTransferAmount.value);
+  const receiveAcc = accounts.find(
+    acc => acc.username === inputTransferTo.value
+  );
+  inputTransferAmount.value = inputTransferTo.value = '';
+  inputTransferTo.blur();
+  if (
+    amount > 0 &&
+    receiveAcc &&
+    currentAccount.balance >= amount &&
+    receiveAcc?.username !== currentAccount.username
+  ) {
+    currentAccount.movements.push(-amount);
+    receiveAcc.movements.push(amount);
+    updateUI(currentAccount);
+  }
+});
 
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
@@ -152,16 +224,16 @@ createUsernames(accounts);
 // currenciesUnique.forEach(function (value, key, map) {
 //   console.log(`${key}: ${value}`);
 // });
+// challene
+// const dogAge = [5, 2, 4, 1, 15, 8, 3];
+// const calcAverageHumanAge = function (ages) {
+//   const humanAge = ages.map(age => (age <= 2 ? 2 * age : 16 + 4 * age));
+//   console.log(humanAge);
+//   const lessThan = humanAge.filter(age => age > 18);
+//   console.log(lessThan);
+//   const avg = lessThan.reduce((acc, age) => acc + age, 0) / lessThan.length;
+//   return avg;
+// };
 
-const dogAge = [5, 2, 4, 1, 15, 8, 3];
-const calcAverageHumanAge = function (ages) {
-  const humanAge = ages.map(age => (age <= 2 ? 2 * age : 16 + 4 * age));
-  console.log(humanAge);
-  const lessThan = humanAge.filter(age => age > 18);
-  console.log(lessThan);
-  const avg = lessThan.reduce((acc, age) => acc + age, 0) / lessThan.length;
-  return avg;
-};
-
-const avg1 = calcAverageHumanAge(dogAge);
-console.log(avg1);
+// const avg1 = calcAverageHumanAge(dogAge);
+// console.log(avg1);
