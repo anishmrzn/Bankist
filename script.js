@@ -189,12 +189,6 @@ const startLogOutTimer = function () {
 // Event handlers
 let currentAccount, timer;
 
-//fake login
-
-currentAccount = account1;
-updateUI(currentAccount);
-containerApp.style.opacity = 100;
-
 const now = new Date();
 const day = `${now.getDate()}`.padStart(2, 0);
 const month = `${now.getMonth() + 1}`.padStart(2, 0);
